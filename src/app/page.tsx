@@ -62,7 +62,6 @@ const Home: React.FC = () => {
 
   const [error, setError] = useState<string>("")
 
-  // Generate invoice number on mount
   useEffect(() => {
     const generateInvoiceNumber = (): string => {
       const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase()
@@ -85,7 +84,6 @@ const Home: React.FC = () => {
     }))
   }, [])
 
-  // Calculate totals whenever items or tax rates change
   useEffect(() => {
     calculateTotals()
   }, [items, invoice.ppnRate, invoice.pphRate])
@@ -99,12 +97,8 @@ const Home: React.FC = () => {
 
   const calculateTotals = (): void => {
     const subtotal = items.reduce((sum, item) => sum + calculateItemTotal(item), 0)
-
-    // PPH is calculated from subtotal and subtracted first
-    // PPN is then calculated from the remaining amount (subtotal - PPH)
-    // This follows Indonesian tax accounting standards
     const pphAmount = (subtotal * (Number.parseFloat(String(invoice.pphRate)) || 0)) / 100
-    const subtotalAfterPPH = Math.max(0, subtotal - pphAmount) // Ensure non-negative
+    const subtotalAfterPPH = Math.max(0, subtotal - pphAmount)
     const ppnAmount = (subtotalAfterPPH * (Number.parseFloat(String(invoice.ppnRate)) || 0)) / 100
     const total = subtotalAfterPPH + ppnAmount
 
@@ -144,7 +138,6 @@ const Home: React.FC = () => {
   const handleSubmit = (): void => {
     setError("")
 
-    // Validation
     if (!invoice.customerName.trim()) {
       setError("Nama pelanggan harus diisi")
       return
@@ -155,12 +148,10 @@ const Home: React.FC = () => {
       return
     }
 
-    // Generate PDF
     generatePDF()
   }
 
   const generatePDF = (): void => {
-    // Create a printable invoice view
     const printWindow = window.open("", "_blank")
     if (!printWindow) {
       setError("Pop-up diblokir. Mohon izinkan pop-up untuk generate invoice.")
@@ -176,7 +167,7 @@ const Home: React.FC = () => {
         <title>Invoice #${invoice.invoiceNumber}</title>
         <style>
           @page {
-            size: A4;
+            size: A5;
             margin: 0;
           }
 
@@ -188,135 +179,137 @@ const Home: React.FC = () => {
 
           body {
             font-family: Arial, sans-serif;
-            font-size: 11px;
-            line-height: 1.3;
+            font-size: 10px;
+            line-height: 1.2;
             color: #333;
-            width: 210mm;
-            height: 297mm;
-            position: relative;
-            background-image: url('${window.location.origin}/bg.png');
-            background-size: 210mm auto;
-            background-repeat: no-repeat;
-            background-position: top left;
-          }
+            width: 148mm;
+            height: 210mm;
+            background: white;
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAABKCAYAAACwFBHsAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEqmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI1LTA2LTA2PC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkV4dElkPjVlMzQ4NDU4LThjYjgtNDE2Zi1iYjA2LThjYTlhN2I3ZjYwMDwvQXR0cmliOkV4dElkPgogICAgIDxBdHRyaWI6RmJJZD41MjUyNjU5MTQxNzk1ODA8L0F0dHJpYjpGYklkPgogICAgIDxBdHRyaWI6VG91Y2hUeXBlPjI8L0F0dHJpYjpUb3VjaFR5cGU+CiAgICA8L3JkZjpsaT4KICAgPC9yZGY6U2VxPgogIDwvQXR0cmliOkFkcz4KICAKICAKICAKICA8cmRmOlNlcT4KICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKIC
 
           .container {
-            width: 180mm;
-            margin: 0 auto;
-            padding: 60mm 10mm;
-            position: relative;
-            z-index: 1;
+            width: 100%;
+            height: 100%;
+            padding: 12mm 10mm;
+            display: flex;
+            flex-direction: column;
           }
 
           .header {
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             border-bottom: 2px solid #ffc300;
-            padding-bottom: 10px;
+            padding-bottom: 6px;
           }
 
           .company-info {
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
           }
 
           .company-name {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: bold;
             color: #ffc300;
           }
 
-          .invoice-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #fca311;
+          .company-tagline {
+            font-size: 8px;
+            color: #666;
+          }
+
+          .invoice-header {
             text-align: right;
           }
 
+          .invoice-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fca311;
+            margin: 0;
+          }
+
           .invoice-number {
-            font-size: 14px;
+            font-size: 11px;
             color: #666;
-            text-align: right;
+            margin: 0;
           }
 
           .info-section {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            gap: 10px;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 9px;
           }
 
           .info-box {
             flex: 1;
             background-color: #f8fafc;
-            padding: 8px;
-            border-radius: 4px;
-            border-left: 4px solid #ffc300;
+            padding: 6px;
+            border-radius: 3px;
+            border-left: 3px solid #ffc300;
           }
 
           .info-box h3 {
-            margin: 0 0 5px 0;
+            margin: 0 0 3px 0;
             color: #64748b;
-            font-size: 11px;
+            font-size: 9px;
             font-weight: bold;
           }
 
           .info-box p {
-            margin: 3px 0;
-            font-size: 10px;
+            margin: 2px 0;
+            font-size: 8px;
           }
 
           .details-section {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            gap: 10px;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 8px;
           }
 
           .details-box {
             flex: 1;
             background-color: #f8fafc;
-            padding: 8px;
-            border-radius: 4px;
-            border-left: 4px solid #ffc300;
+            padding: 5px;
+            border-radius: 3px;
+            border-left: 3px solid #ffc300;
           }
 
           .details-box h4 {
-            margin: 0 0 3px 0;
+            margin: 0 0 2px 0;
             color: #64748b;
-            font-size: 10px;
+            font-size: 8px;
             font-weight: bold;
           }
 
           .details-box p {
             margin: 0;
-            font-size: 10px;
+            font-size: 8px;
           }
 
           table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 12px;
-            background-color: #fff;
-            border-radius: 4px;
-            overflow: hidden;
+            margin-bottom: 8px;
+            font-size: 8px;
           }
 
           table th,
           table td {
-            padding: 6px 8px;
+            padding: 4px 5px;
             text-align: left;
             border-bottom: 1px solid #ddd;
-            font-size: 10px;
           }
 
           table th {
             background-color: #ffc300;
             color: white;
             font-weight: bold;
+            font-size: 9px;
           }
 
           table td:last-child,
@@ -329,84 +322,74 @@ const Home: React.FC = () => {
           }
 
           .summary {
-            float: right;
-            width: 35%;
-            margin-top: 5px;
+            width: 50%;
+            margin-left: auto;
+            margin-bottom: 8px;
+            font-size: 9px;
           }
 
           .summary table {
-            margin-bottom: 0;
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
           }
 
-          .summary table th {
-            background-color: transparent;
-            color: #333;
-            padding: 3px 0;
-            border: none;
-            text-align: left;
-            font-weight: normal;
-          }
-
+          .summary table th,
           .summary table td {
+            padding: 2px 5px;
+            text-align: left;
             border: none;
-            padding: 3px 0;
-            font-size: 10px;
+          }
+
+          .summary table td:last-child {
+            text-align: right;
           }
 
           .summary table tr:last-child {
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
             border-top: 2px solid #ffc300;
-            padding-top: 5px;
           }
 
           .summary table tr:last-child td {
-            padding-top: 5px;
-          }
-
-          .clear {
-            clear: both;
+            padding-top: 4px;
           }
 
           .notes {
-            margin-top: 12px;
+            margin-bottom: 8px;
             border-top: 1px solid #eee;
-            padding-top: 8px;
+            padding-top: 5px;
+            font-size: 8px;
           }
 
           .notes h3 {
-            margin-top: 0;
-            font-size: 11px;
-            margin-bottom: 5px;
+            margin: 0 0 3px 0;
+            font-size: 9px;
             font-weight: bold;
             color: #333;
           }
 
           .notes p {
-            font-size: 10px;
             margin: 0;
           }
 
           .footer {
-            margin-top: 15px;
+            margin-top: auto;
             text-align: center;
-            font-size: 9px;
+            font-size: 8px;
             color: #777;
             border-top: 1px dashed #ddd;
-            padding-top: 8px;
+            padding-top: 5px;
           }
 
           .footer p {
-            margin: 3px 0;
+            margin: 2px 0;
           }
 
           @media print {
             body {
               margin: 0;
               padding: 0;
-            }
-            .container {
-              padding: 10mm;
             }
           }
         </style>
@@ -415,9 +398,10 @@ const Home: React.FC = () => {
         <div class="container">
           <div class="header">
             <div class="company-info">
-              <div class="company-name">PT. BANANA ANUGRAH PERKASA</div>
+              <div class="company-name">PT. BANANA 88</div>
+              <div class="company-tagline">Anugrah Perkasa</div>
             </div>
-            <div>
+            <div class="invoice-header">
               <div class="invoice-title">INVOICE</div>
               <div class="invoice-number">#${invoice.invoiceNumber}</div>
             </div>
@@ -425,26 +409,25 @@ const Home: React.FC = () => {
 
           <div class="info-section">
             <div class="info-box">
-              <h3>Informasi Pelanggan</h3>
+              <h3>Pelanggan</h3>
               <p><strong>${invoice.customerName}</strong></p>
               ${invoice.customerEmail ? `<p>${invoice.customerEmail}</p>` : ""}
-              ${invoice.customerPhone ? `<p>Telepon: ${invoice.customerPhone}</p>` : ""}
-              ${invoice.customerAddress ? `<p>Alamat: ${invoice.customerAddress}</p>` : ""}
+              ${invoice.customerPhone ? `<p>${invoice.customerPhone}</p>` : ""}
             </div>
           </div>
 
           <div class="details-section">
             <div class="details-box">
-              <h4>Nomor Invoice</h4>
+              <h4>Invoice</h4>
               <p>${invoice.invoiceNumber}</p>
             </div>
             <div class="details-box">
-              <h4>Tanggal Penerbitan</h4>
-              <p>${new Date(invoice.issueDate).toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" })}</p>
+              <h4>Penerbitan</h4>
+              <p>${new Date(invoice.issueDate).toLocaleDateString("id-ID", { year: "numeric", month: "2-digit", day: "2-digit" })}</p>
             </div>
             <div class="details-box">
-              <h4>Tanggal Jatuh Tempo</h4>
-              <p>${new Date(invoice.dueDate).toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" })}</p>
+              <h4>Jatuh Tempo</h4>
+              <p>${new Date(invoice.dueDate).toLocaleDateString("id-ID", { year: "numeric", month: "2-digit", day: "2-digit" })}</p>
             </div>
           </div>
 
@@ -452,10 +435,10 @@ const Home: React.FC = () => {
             <thead>
               <tr>
                 <th>Deskripsi</th>
-                <th>Jumlah</th>
-                <th>Harga</th>
-                <th>Jumlah Hari</th>
-                <th>Total</th>
+                <th style="width: 12%;">Qty</th>
+                <th style="width: 18%;">Harga</th>
+                <th style="width: 10%;">Hari</th>
+                <th style="width: 20%;">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -478,14 +461,14 @@ const Home: React.FC = () => {
           <div class="summary">
             <table>
               <tr>
-                <td>Subtotal:</td>
+                <td>Subtotal</td>
                 <td>${formatCurrency(totals.subtotal)}</td>
               </tr>
               ${
                 invoice.pphRate > 0
                   ? `
                 <tr>
-                  <td>PPH (${invoice.pphRate}%):</td>
+                  <td>PPH (${invoice.pphRate}%)</td>
                   <td>-${formatCurrency(totals.pphAmount)}</td>
                 </tr>
               `
@@ -495,20 +478,18 @@ const Home: React.FC = () => {
                 invoice.ppnRate > 0
                   ? `
                 <tr>
-                  <td>PPN (${invoice.ppnRate}%):</td>
+                  <td>PPN (${invoice.ppnRate}%)</td>
                   <td>+${formatCurrency(totals.ppnAmount)}</td>
                 </tr>
               `
                   : ""
               }
               <tr>
-                <td><strong>Total:</strong></td>
+                <td><strong>Total</strong></td>
                 <td><strong>${formatCurrency(totals.total)}</strong></td>
               </tr>
             </table>
           </div>
-
-          <div class="clear"></div>
 
           ${
             invoice.notes
@@ -523,7 +504,7 @@ const Home: React.FC = () => {
 
           <div class="footer">
             <p>Terima kasih atas bisnis Anda!</p>
-            <p>Jika Anda memiliki pertanyaan tentang faktur ini, silakan hubungi kami</p>
+            <p>Hubungi kami jika ada pertanyaan</p>
           </div>
         </div>
 
@@ -543,13 +524,11 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Invoice Generator</h1>
-          <p className="text-gray-600 mt-1">Buat invoice untuk pelanggan di bawah ini</p>
+          <p className="text-gray-600 mt-1">PT. Banana 88 - Anugrah Perkasa</p>
         </div>
 
-        {/* Error Alert */}
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
@@ -559,7 +538,6 @@ const Home: React.FC = () => {
 
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Invoice Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Informasi Invoice</CardTitle>
@@ -618,7 +596,6 @@ const Home: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Customer Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Informasi Pelanggan</CardTitle>
@@ -662,7 +639,6 @@ const Home: React.FC = () => {
             </Card>
           </div>
 
-          {/* Invoice Items */}
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
@@ -739,7 +715,6 @@ const Home: React.FC = () => {
                 </table>
               </div>
 
-              {/* Totals */}
               <div className="mt-6 flex justify-end">
                 <div className="w-full md:w-80 bg-gray-50 p-4 rounded-lg space-y-2">
                   <div className="flex justify-between">
@@ -763,7 +738,6 @@ const Home: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Notes */}
           <Card>
             <CardContent className="pt-6">
               <Label htmlFor="notes">Catatan</Label>
@@ -778,7 +752,6 @@ const Home: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Submit Button */}
           <Button onClick={handleSubmit} size="lg" className="w-full md:w-auto">
             <Printer className="w-5 h-5 mr-2" />
             Generate & Print Invoice
