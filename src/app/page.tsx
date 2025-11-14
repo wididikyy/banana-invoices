@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,15 +22,19 @@ interface InvoiceData {
   dueDate: string
   ppnRate: number
   pphRate: number
+  dpAmount: number
   customerName: string
   customerEmail: string
   customerPhone: string
   customerAddress: string
   notes: string
+  signatureLocation: string
+  signatureName: string
 }
 
 interface Totals {
   subtotal: number
+  afterDP: number
   ppnAmount: number
   pphAmount: number
   total: number
@@ -44,17 +47,23 @@ const Home: React.FC = () => {
     dueDate: "",
     ppnRate: 0,
     pphRate: 0,
+    dpAmount: 0,
     customerName: "",
     customerEmail: "",
     customerPhone: "",
     customerAddress: "",
-    notes: "",
+    notes: "Pembayaran bisa melalui : Nomer Rekening : 0091641177 (BCA : Reza Ferdyan A). || Qris By WhatsApp : 081334575487 / Driver || Cash",
+    signatureLocation: "Banyuwangi",
+    signatureName: "Reza Ferdyan A.",
   })
 
-  const [items, setItems] = useState<InvoiceItem[]>([{ description: "", quantity: 1, price: 0, days: 1 }])
+  const [items, setItems] = useState<InvoiceItem[]>([
+    { description: "", quantity: 1, price: 0, days: 1 }
+  ])
 
   const [totals, setTotals] = useState<Totals>({
     subtotal: 0,
+    afterDP: 0,
     ppnAmount: 0,
     pphAmount: 0,
     total: 0,
@@ -86,23 +95,24 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     calculateTotals()
-  }, [items, invoice.ppnRate, invoice.pphRate])
+  }, [items, invoice.ppnRate, invoice.pphRate, invoice.dpAmount])
 
   const calculateItemTotal = (item: InvoiceItem): number => {
-    const quantity = Number.parseInt(String(item.quantity)) || 0
-    const price = Number.parseFloat(String(item.price)) || 0
-    const days = Number.parseInt(String(item.days)) || 1
+    const quantity = Number(item.quantity) || 0
+    const price = Number(item.price) || 0
+    const days = Number(item.days) || 1
     return quantity * price * days
   }
 
   const calculateTotals = (): void => {
     const subtotal = items.reduce((sum, item) => sum + calculateItemTotal(item), 0)
-    const pphAmount = (subtotal * (Number.parseFloat(String(invoice.pphRate)) || 0)) / 100
-    const subtotalAfterPPH = Math.max(0, subtotal - pphAmount)
-    const ppnAmount = (subtotalAfterPPH * (Number.parseFloat(String(invoice.ppnRate)) || 0)) / 100
-    const total = subtotalAfterPPH + ppnAmount
+    const dpAmount = Number(invoice.dpAmount) || 0
+    const afterDP = Math.max(0, subtotal - dpAmount)
+    const ppnAmount = (afterDP * (Number(invoice.ppnRate) || 0)) / 100
+    const pphAmount = (afterDP * (Number(invoice.pphRate) || 0)) / 100
+    const total = afterDP + ppnAmount + pphAmount
 
-    setTotals({ subtotal, ppnAmount, pphAmount, total })
+    setTotals({ subtotal, afterDP, ppnAmount, pphAmount, total })
   }
 
   const formatCurrency = (amount: number): string => {
@@ -121,18 +131,12 @@ const Home: React.FC = () => {
 
   const updateItem = (index: number, field: keyof InvoiceItem, value: string | number): void => {
     const newItems = [...items]
-    newItems[index] = {
-      ...newItems[index],
-      [field]: value,
-    }
+    newItems[index] = { ...newItems[index], [field]: value }
     setItems(newItems)
   }
 
   const updateInvoice = (field: keyof InvoiceData, value: string | number): void => {
-    setInvoice((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
+    setInvoice((prev) => ({ ...prev, [field]: value }))
   }
 
   const handleSubmit = (): void => {
@@ -151,6 +155,25 @@ const Home: React.FC = () => {
     generatePDF()
   }
 
+  const formatDateIndonesian = (dateString: string): string => {
+    const date = new Date(dateString)
+    const day = String(date.getDate()).padStart(2, '0')
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+    const month = months[date.getMonth()]
+    const year = date.getFullYear()
+    return `${day} ${month} ${year}`
+  }
+
+  const escapeHtml = (text: string): string => {
+    const div = document.createElement('div')
+    div.textContent = text
+    return div.innerHTML
+  }
+
+  const formatNotesWithLineBreaks = (notes: string): string => {
+    return escapeHtml(notes).replace(/\n/g, '<br>')
+  }
+
   const generatePDF = (): void => {
     const printWindow = window.open("", "_blank")
     if (!printWindow) {
@@ -166,27 +189,19 @@ const Home: React.FC = () => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Invoice #${invoice.invoiceNumber}</title>
         <style>
-          @page {
-            size: A5;
-            margin: 0;
-          }
-
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-          }
-
+          @page { size: A5; margin: 0; }
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          
           body {
             font-family: Arial, sans-serif;
             font-size: 10px;
             line-height: 1.2;
-            color: #333;
+            color: #000000;
             width: 148mm;
             height: 210mm;
             background: white;
-            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAABKCAYAAACwFBHsAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEqmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI1LTA2LTA2PC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkV4dElkPjVlMzQ4NDU4LThjYjgtNDE2Zi1iYjA2LThjYTlhN2I3ZjYwMDwvQXR0cmliOkV4dElkPgogICAgIDxBdHRyaWI6RmJJZD41MjUyNjU5MTQxNzk1ODA8L0F0dHJpYjpGYklkPgogICAgIDxBdHRyaWI6VG91Y2hUeXBlPjI8L0F0dHJpYjpUb3VjaFR5cGU+CiAgICA8L3JkZjpsaT4KICAgPC9yZGY6U2VxPgogIDwvQXR0cmliOkFkcz4KICAKICAKICAKICA8cmRmOlNlcT4KICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKICAKIC
-
+          }
+          
           .container {
             width: 100%;
             height: 100%;
@@ -200,42 +215,13 @@ const Home: React.FC = () => {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #ffc300;
             padding-bottom: 6px;
           }
 
-          .company-info {
-            display: flex;
-            flex-direction: column;
-          }
-
-          .company-name {
-            font-size: 13px;
-            font-weight: bold;
-            color: #ffc300;
-          }
-
-          .company-tagline {
-            font-size: 8px;
-            color: #666;
-          }
-
-          .invoice-header {
-            text-align: right;
-          }
-
-          .invoice-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #fca311;
-            margin: 0;
-          }
-
-          .invoice-number {
-            font-size: 11px;
-            color: #666;
-            margin: 0;
-          }
+          .company-info { display: flex; align-items: center; gap: 8px; }
+          .invoice-header { text-align: right; }
+          .invoice-title { font-size: 16px; font-weight: bold; margin: 0; }
+          .invoice-number { font-size: 11px; margin: 0; }
 
           .info-section {
             display: flex;
@@ -248,21 +234,10 @@ const Home: React.FC = () => {
             flex: 1;
             background-color: #f8fafc;
             padding: 6px;
-            border-radius: 3px;
-            border-left: 3px solid #ffc300;
           }
 
-          .info-box h3 {
-            margin: 0 0 3px 0;
-            color: #64748b;
-            font-size: 9px;
-            font-weight: bold;
-          }
-
-          .info-box p {
-            margin: 2px 0;
-            font-size: 8px;
-          }
+          .info-box h3 { margin: 0 0 3px 0; font-size: 9px; font-weight: bold; }
+          .info-box p { margin: 2px 0; font-size: 8px; }
 
           .details-section {
             display: flex;
@@ -275,21 +250,10 @@ const Home: React.FC = () => {
             flex: 1;
             background-color: #f8fafc;
             padding: 5px;
-            border-radius: 3px;
-            border-left: 3px solid #ffc300;
           }
 
-          .details-box h4 {
-            margin: 0 0 2px 0;
-            color: #64748b;
-            font-size: 8px;
-            font-weight: bold;
-          }
-
-          .details-box p {
-            margin: 0;
-            font-size: 8px;
-          }
+          .details-box h4 { margin: 0 0 2px 0; font-size: 8px; font-weight: bold; }
+          .details-box p { margin: 0; font-size: 8px; }
 
           table {
             width: 100%;
@@ -298,26 +262,20 @@ const Home: React.FC = () => {
             font-size: 8px;
           }
 
-          table th,
-          table td {
+          table th, table td {
             padding: 4px 5px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #c4c4c4;
           }
 
           table th {
-            background-color: #ffc300;
-            color: white;
             font-weight: bold;
             font-size: 9px;
           }
 
-          table td:last-child,
-          table th:last-child,
-          table td:nth-last-child(2),
-          table th:nth-last-child(2),
-          table td:nth-last-child(3),
-          table th:nth-last-child(3) {
+          table td:last-child, table th:last-child,
+          table td:nth-last-child(2), table th:nth-last-child(2),
+          table td:nth-last-child(3), table th:nth-last-child(3) {
             text-align: right;
           }
 
@@ -328,69 +286,76 @@ const Home: React.FC = () => {
             font-size: 9px;
           }
 
-          .summary table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 0;
-          }
-
-          .summary table th,
-          .summary table td {
-            padding: 2px 5px;
-            text-align: left;
-            border: none;
-          }
-
-          .summary table td:last-child {
-            text-align: right;
-          }
-
+          .summary table { width: 100%; border-collapse: collapse; margin: 0; }
+          .summary table th, .summary table td { padding: 2px 5px; text-align: left; border: none; }
+          .summary table td:last-child { text-align: right; }
+          
           .summary table tr:last-child {
             font-weight: bold;
             font-size: 11px;
-            border-top: 2px solid #ffc300;
           }
-
-          .summary table tr:last-child td {
-            padding-top: 4px;
-          }
+          
+          .summary table tr:last-child td { padding-top: 4px; }
 
           .notes {
             margin-bottom: 8px;
             border-top: 1px solid #eee;
-            padding-top: 5px;
+            padding-top: 12px;
             font-size: 8px;
           }
 
-          .notes h3 {
-            margin: 0 0 3px 0;
-            font-size: 9px;
-            font-weight: bold;
-            color: #333;
+          .notes h3 { margin: 0 0 3px 0; font-size: 9px; font-weight: bold; color: #333; }
+          .notes p { margin: 0; line-height: 1.4; }
+
+          .signature-section {
+            margin-top: 12px;
+            margin-bottom: 8px;
+            text-align: right;
+            font-size: 8px;
           }
 
-          .notes p {
-            margin: 0;
+          .signature-box {
+            display: inline-block;
+            text-align: center;
+            min-width: 100px;
+          }
+
+          .signature-box p { margin: 2px 0; }
+          .signature-space { height: 40px; margin: 5px 0; }
+          
+          .signature-name {
+            padding-top: 2px;
+            display: inline-block;
+            min-width: 100px;
           }
 
           .footer {
             margin-top: auto;
-            text-align: center;
             font-size: 8px;
-            color: #777;
-            border-top: 1px dashed #ddd;
-            padding-top: 5px;
+            border-top: 1px dashed #c4c4c4;
+            padding-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
           }
 
-          .footer p {
+          .footer img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            display: block;
+          }
+
+          .footer-text {
+            line-height: 1.5;
+          }
+          
+          .footer-text p {
             margin: 2px 0;
           }
 
           @media print {
-            body {
-              margin: 0;
-              padding: 0;
-            }
+            body { margin: 0; padding: 0; }
           }
         </style>
       </head>
@@ -398,36 +363,37 @@ const Home: React.FC = () => {
         <div class="container">
           <div class="header">
             <div class="company-info">
-              <div class="company-name">PT. BANANA 88</div>
-              <div class="company-tagline">Anugrah Perkasa</div>
+              <img src="/img-small.png" alt="Logo" width="80" height="60" />
+              <h1>PT. Banana 88 - Anugrah Perkasa</h1>
             </div>
             <div class="invoice-header">
               <div class="invoice-title">INVOICE</div>
-              <div class="invoice-number">#${invoice.invoiceNumber}</div>
+              <div class="invoice-number">${invoice.invoiceNumber}</div>
             </div>
           </div>
 
           <div class="info-section">
             <div class="info-box">
-              <h3>Pelanggan</h3>
+              <h3>Informasi Pelanggan</h3>
               <p><strong>${invoice.customerName}</strong></p>
               ${invoice.customerEmail ? `<p>${invoice.customerEmail}</p>` : ""}
-              ${invoice.customerPhone ? `<p>${invoice.customerPhone}</p>` : ""}
+              ${invoice.customerPhone ? `<p>Telepon: ${invoice.customerPhone}</p>` : ""}
+              ${invoice.customerAddress ? `<p>Alamat: ${invoice.customerAddress}</p>` : ""}
             </div>
           </div>
 
           <div class="details-section">
             <div class="details-box">
-              <h4>Invoice</h4>
+              <h4>Nomor Invoice</h4>
               <p>${invoice.invoiceNumber}</p>
             </div>
             <div class="details-box">
-              <h4>Penerbitan</h4>
-              <p>${new Date(invoice.issueDate).toLocaleDateString("id-ID", { year: "numeric", month: "2-digit", day: "2-digit" })}</p>
+              <h4>Tanggal Penerbitan</h4>
+              <p>${new Date(invoice.issueDate).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</p>
             </div>
             <div class="details-box">
-              <h4>Jatuh Tempo</h4>
-              <p>${new Date(invoice.dueDate).toLocaleDateString("id-ID", { year: "numeric", month: "2-digit", day: "2-digit" })}</p>
+              <h4>Tanggal Jatuh Tempo</h4>
+              <p>${new Date(invoice.dueDate).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</p>
             </div>
           </div>
 
@@ -435,16 +401,14 @@ const Home: React.FC = () => {
             <thead>
               <tr>
                 <th>Deskripsi</th>
-                <th style="width: 12%;">Qty</th>
+                <th style="width: 12%;">Jumlah</th>
                 <th style="width: 18%;">Harga</th>
-                <th style="width: 10%;">Hari</th>
+                <th style="width: 12%;">Jumlah Hari</th>
                 <th style="width: 20%;">Total</th>
               </tr>
             </thead>
             <tbody>
-              ${items
-                .map(
-                  (item) => `
+              ${items.map(item => `
                 <tr>
                   <td>${item.description}</td>
                   <td>${item.quantity}</td>
@@ -452,59 +416,63 @@ const Home: React.FC = () => {
                   <td>${item.days}</td>
                   <td>${formatCurrency(calculateItemTotal(item))}</td>
                 </tr>
-              `,
-                )
-                .join("")}
+              `).join("")}
             </tbody>
           </table>
 
           <div class="summary">
             <table>
               <tr>
-                <td>Subtotal</td>
+                <td>Subtotal:</td>
                 <td>${formatCurrency(totals.subtotal)}</td>
               </tr>
-              ${
-                invoice.pphRate > 0
-                  ? `
+              ${invoice.dpAmount > 0 ? `
                 <tr>
-                  <td>PPH (${invoice.pphRate}%)</td>
-                  <td>-${formatCurrency(totals.pphAmount)}</td>
+                  <td>DP:</td>
+                  <td>${formatCurrency(invoice.dpAmount)}</td>
                 </tr>
-              `
-                  : ""
-              }
-              ${
-                invoice.ppnRate > 0
-                  ? `
+              ` : ""}
+              ${invoice.ppnRate > 0 ? `
                 <tr>
-                  <td>PPN (${invoice.ppnRate}%)</td>
-                  <td>+${formatCurrency(totals.ppnAmount)}</td>
+                  <td>PPN (${invoice.ppnRate}%):</td>
+                  <td>${formatCurrency(totals.ppnAmount)}</td>
                 </tr>
-              `
-                  : ""
-              }
+              ` : ""}
+              ${invoice.pphRate > 0 ? `
+                <tr>
+                  <td>PPH (${invoice.pphRate}%):</td>
+                  <td>${formatCurrency(totals.pphAmount)}</td>
+                </tr>
+              ` : ""}
               <tr>
-                <td><strong>Total</strong></td>
+                <td><strong>Total:</strong></td>
                 <td><strong>${formatCurrency(totals.total)}</strong></td>
               </tr>
             </table>
           </div>
 
-          ${
-            invoice.notes
-              ? `
+          ${invoice.notes ? `
             <div class="notes">
               <h3>Catatan</h3>
-              <p>${invoice.notes}</p>
+              <p>${formatNotesWithLineBreaks(invoice.notes)}</p>
             </div>
-          `
-              : ""
-          }
+          ` : ""}
+
+          <div class="signature-section">
+            <div class="signature-box">
+              <p>${invoice.signatureLocation}, ${formatDateIndonesian(invoice.issueDate)}</p>
+              <div class="signature-space"></div>
+              <div class="signature-name">${invoice.signatureName}</div>
+            </div>
+          </div>
 
           <div class="footer">
-            <p>Terima kasih atas bisnis Anda!</p>
-            <p>Hubungi kami jika ada pertanyaan</p>
+            <img src="/img-big.png" alt="Logo">
+            <div class="footer-text">
+              <p>Jl. Trenggono D.21 Peruri Kavling Brawijaya Asri, Linkungan Brawijaya, Kel.</p>
+              <p>Kebalenan, Kec. Banyuwangi, Kab. Banyuwangi, Prov. Jawa Timur 68417</p>
+              <p>Tlp: 0813-5892-2199 / 0813-3457-5487</p>
+            </div>
           </div>
         </div>
 
@@ -570,6 +538,18 @@ const Home: React.FC = () => {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="dpAmount">DP (Down Payment)</Label>
+                  <Input
+                    id="dpAmount"
+                    type="number"
+                    min="0"
+                    step="1000"
+                    value={invoice.dpAmount}
+                    onChange={(e) => updateInvoice("dpAmount", Number(e.target.value) || 0)}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
                   <Label htmlFor="ppnRate">PPN (%)</Label>
                   <Input
                     id="ppnRate"
@@ -578,7 +558,7 @@ const Home: React.FC = () => {
                     max="100"
                     step="0.1"
                     value={invoice.ppnRate}
-                    onChange={(e) => updateInvoice("ppnRate", Number.parseFloat(e.target.value) || 0)}
+                    onChange={(e) => updateInvoice("ppnRate", Number(e.target.value) || 0)}
                   />
                 </div>
                 <div>
@@ -590,7 +570,7 @@ const Home: React.FC = () => {
                     max="100"
                     step="0.1"
                     value={invoice.pphRate}
-                    onChange={(e) => updateInvoice("pphRate", Number.parseFloat(e.target.value) || 0)}
+                    onChange={(e) => updateInvoice("pphRate", Number(e.target.value) || 0)}
                   />
                 </div>
               </CardContent>
@@ -677,7 +657,7 @@ const Home: React.FC = () => {
                             type="number"
                             min="1"
                             value={item.quantity}
-                            onChange={(e) => updateItem(index, "quantity", Number.parseInt(e.target.value) || 1)}
+                            onChange={(e) => updateItem(index, "quantity", Number(e.target.value) || 1)}
                           />
                         </td>
                         <td className="py-3 px-2">
@@ -685,7 +665,7 @@ const Home: React.FC = () => {
                             type="number"
                             min="0"
                             value={item.price}
-                            onChange={(e) => updateItem(index, "price", Number.parseFloat(e.target.value) || 0)}
+                            onChange={(e) => updateItem(index, "price", Number(e.target.value) || 0)}
                             placeholder="0"
                           />
                         </td>
@@ -694,10 +674,12 @@ const Home: React.FC = () => {
                             type="number"
                             min="1"
                             value={item.days}
-                            onChange={(e) => updateItem(index, "days", Number.parseInt(e.target.value) || 1)}
+                            onChange={(e) => updateItem(index, "days", Number(e.target.value) || 1)}
                           />
                         </td>
-                        <td className="py-3 px-2 text-right font-medium">{formatCurrency(calculateItemTotal(item))}</td>
+                        <td className="py-3 px-2 text-right font-medium">
+                          {formatCurrency(calculateItemTotal(item))}
+                        </td>
                         <td className="py-3 px-2 text-center">
                           <Button
                             type="button"
@@ -721,14 +703,24 @@ const Home: React.FC = () => {
                     <span>Subtotal:</span>
                     <span className="font-medium">{formatCurrency(totals.subtotal)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>PPH ({invoice.pphRate}%):</span>
-                    <span className="font-medium">-{formatCurrency(totals.pphAmount)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>PPN ({invoice.ppnRate}%):</span>
-                    <span className="font-medium">+{formatCurrency(totals.ppnAmount)}</span>
-                  </div>
+                  {invoice.dpAmount > 0 && (
+                    <div className="flex justify-between">
+                      <span>DP:</span>
+                      <span className="font-medium">{formatCurrency(invoice.dpAmount)}</span>
+                    </div>
+                  )}
+                  {invoice.ppnRate > 0 && (
+                    <div className="flex justify-between">
+                      <span>PPN ({invoice.ppnRate}%):</span>
+                      <span className="font-medium">{formatCurrency(totals.ppnAmount)}</span>
+                    </div>
+                  )}
+                  {invoice.pphRate > 0 && (
+                    <div className="flex justify-between">
+                      <span>PPH ({invoice.pphRate}%):</span>
+                      <span className="font-medium">{formatCurrency(totals.pphAmount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-lg font-bold border-t pt-2">
                     <span>Total:</span>
                     <span className="text-foreground">{formatCurrency(totals.total)}</span>
@@ -740,15 +732,43 @@ const Home: React.FC = () => {
 
           <Card>
             <CardContent className="pt-6">
-              <Label htmlFor="notes">Catatan</Label>
+              <Label htmlFor="notes">Catatan Tambahan (Opsional)</Label>
               <Textarea
                 id="notes"
                 rows={3}
                 value={invoice.notes}
                 onChange={(e) => updateInvoice("notes", e.target.value)}
-                placeholder="Tambahkan catatan untuk pelanggan..."
+                placeholder="Catatan tambahan untuk pelanggan..."
                 className="mt-2"
               />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Informasi Pembayaran & Tanda Tangan</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="signatureLocation">Lokasi Tanda Tangan</Label>
+                  <Input
+                    id="signatureLocation"
+                    value={invoice.signatureLocation}
+                    onChange={(e) => updateInvoice("signatureLocation", e.target.value)}
+                    placeholder="Banyuwangi"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="signatureName">Nama Penandatangan</Label>
+                  <Input
+                    id="signatureName"
+                    value={invoice.signatureName}
+                    onChange={(e) => updateInvoice("signatureName", e.target.value)}
+                    placeholder="Nama lengkap"
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
 
