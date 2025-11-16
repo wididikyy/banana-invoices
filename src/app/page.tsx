@@ -365,7 +365,7 @@ const Home: React.FC = () => {
           <div class="header">
             <div class="company-info">
               <img src="/img-small.png" alt="Logo" width="90" height="70" />
-              <h1>PT. Banana 88 - Anugrah Perkasa</h1>
+              <h1>PT. BANANA ANUGRAH PERKASA</h1>
             </div>
             <div class="invoice-header">
               <div class="invoice-title">INVOICE</div>
