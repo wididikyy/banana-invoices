@@ -189,88 +189,89 @@ const Home: React.FC = () => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Invoice #${invoice.invoiceNumber}</title>
         <style>
-          @page { size: A5; margin: 0; }
+          @page { size: A4; margin: 0; }
           * { margin: 0; padding: 0; box-sizing: border-box; }
           
           body {
             font-family: Arial, sans-serif;
-            font-size: 10px;
-            line-height: 1.2;
+            font-size: 11px;
+            line-height: 1.4;
             color: #000000;
-            width: 148mm;
-            height: 210mm;
+            width: 210mm;
+            height: 297mm;
             background: white;
           }
           
           .container {
             width: 100%;
             height: 100%;
-            padding: 12mm 10mm;
+            padding: 15mm 20mm;
             display: flex;
             flex-direction: column;
           }
 
           .header {
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 6px;
+            padding-bottom: 8px;
           }
 
-          .company-info { display: flex; align-items: center; gap: 8px; }
+          .company-info { display: flex; align-items: center; gap: 10px; }
+          .company-info h1 { font-size: 18px; font-weight: bold; }
           .invoice-header { text-align: right; }
-          .invoice-title { font-size: 16px; font-weight: bold; margin: 0; }
-          .invoice-number { font-size: 11px; margin: 0; }
+          .invoice-title { font-size: 20px; font-weight: bold; margin: 0; }
+          .invoice-number { font-size: 12px; margin: 0; }
 
           .info-section {
             display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-            font-size: 9px;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 10px;
           }
 
           .info-box {
             flex: 1;
             background-color: #f8fafc;
-            padding: 6px;
+            padding: 8px;
           }
 
-          .info-box h3 { margin: 0 0 3px 0; font-size: 9px; font-weight: bold; }
-          .info-box p { margin: 2px 0; font-size: 8px; }
+          .info-box h3 { margin: 0 0 4px 0; font-size: 10px; font-weight: bold; }
+          .info-box p { margin: 2px 0; font-size: 9px; }
 
           .details-section {
             display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-            font-size: 8px;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 9px;
           }
 
           .details-box {
             flex: 1;
             background-color: #f8fafc;
-            padding: 5px;
+            padding: 6px;
           }
 
-          .details-box h4 { margin: 0 0 2px 0; font-size: 8px; font-weight: bold; }
-          .details-box p { margin: 0; font-size: 8px; }
+          .details-box h4 { margin: 0 0 3px 0; font-size: 9px; font-weight: bold; }
+          .details-box p { margin: 0; font-size: 9px; }
 
           table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 8px;
-            font-size: 8px;
+            margin-bottom: 10px;
+            font-size: 9px;
           }
 
           table th, table td {
-            padding: 4px 5px;
+            padding: 5px 6px;
             text-align: left;
             border-bottom: 1px solid #c4c4c4;
           }
 
           table th {
             font-weight: bold;
-            font-size: 9px;
+            font-size: 10px;
           }
 
           table td:last-child, table th:last-child,
@@ -282,72 +283,72 @@ const Home: React.FC = () => {
           .summary {
             width: 50%;
             margin-left: auto;
-            margin-bottom: 8px;
-            font-size: 9px;
+            margin-bottom: 10px;
+            font-size: 10px;
           }
 
           .summary table { width: 100%; border-collapse: collapse; margin: 0; }
-          .summary table th, .summary table td { padding: 2px 5px; text-align: left; border: none; }
+          .summary table th, .summary table td { padding: 3px 6px; text-align: left; border: none; }
           .summary table td:last-child { text-align: right; }
           
           .summary table tr:last-child {
             font-weight: bold;
-            font-size: 11px;
+            font-size: 12px;
           }
           
-          .summary table tr:last-child td { padding-top: 4px; }
+          .summary table tr:last-child td { padding-top: 5px; }
 
           .notes {
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             border-top: 1px solid #eee;
-            padding-top: 12px;
-            font-size: 8px;
+            padding-top: 15px;
+            font-size: 9px;
           }
 
-          .notes h3 { margin: 0 0 3px 0; font-size: 9px; font-weight: bold; color: #333; }
-          .notes p { margin: 0; line-height: 1.4; }
+          .notes h3 { margin: 0 0 4px 0; font-size: 10px; font-weight: bold; color: #333; }
+          .notes p { margin: 0; line-height: 1.5; }
 
           .signature-section {
-            margin-top: 12px;
-            margin-bottom: 8px;
+            margin-top: 15px;
+            margin-bottom: 10px;
             text-align: right;
-            font-size: 8px;
+            font-size: 9px;
           }
 
           .signature-box {
             display: inline-block;
             text-align: center;
-            min-width: 100px;
+            min-width: 120px;
           }
 
-          .signature-box p { margin: 2px 0; }
-          .signature-space { height: 40px; margin: 5px 0; }
+          .signature-box p { margin: 3px 0; }
+          .signature-space { height: 50px; margin: 6px 0; }
           
           .signature-name {
-            padding-top: 2px;
+            padding-top: 3px;
             display: inline-block;
-            min-width: 100px;
+            min-width: 120px;
           }
 
           .footer {
             margin-top: auto;
-            font-size: 8px;
+            font-size: 9px;
             border-top: 1px dashed #c4c4c4;
-            padding-top: 8px;
+            padding-top: 10px;
             display: flex;
             align-items: center;
             justify-content: space-between;
           }
 
           .footer img {
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
             object-fit: contain;
             display: block;
           }
 
           .footer-text {
-            line-height: 1.5;
+            line-height: 1.6;
           }
           
           .footer-text p {
@@ -363,7 +364,7 @@ const Home: React.FC = () => {
         <div class="container">
           <div class="header">
             <div class="company-info">
-              <img src="/img-small.png" alt="Logo" width="80" height="60" />
+              <img src="/img-small.png" alt="Logo" width="90" height="70" />
               <h1>PT. Banana 88 - Anugrah Perkasa</h1>
             </div>
             <div class="invoice-header">
